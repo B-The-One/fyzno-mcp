@@ -2,3 +2,6 @@ node_modules/
 *.tgz
 package-lock.json
 .DS_Store
+
+# Local operator notes. Contains machine paths, so it never goes to GitHub.
+RELEASING.md

@@ -23,13 +23,15 @@ npm test
 ## Releasing
 
 1. Bump `version` in `package.json` and `SERVER_INFO.version` in `server.mjs`.
+   `npm test` fails if they disagree.
 2. Add a `CHANGELOG.md` entry.
-3. Commit and push. The tag has to point at a commit that already has the new
-   version in it, so the bump goes in before the release, not after.
-4. Create a GitHub Release with tag `vX.Y.Z`, and write a description; left
-   blank, GitHub falls back to the commit message.
+3. Commit and push. The tag points at a commit, so the bump goes in before the
+   release, not after.
+4. Create a GitHub Release tagged `vX.Y.Z` and write a description. Left blank,
+   GitHub falls back to the commit message.
 
-CI publishes via Trusted Publishing. There is no npm token in this repo.
+CI publishes through Trusted Publishing, so there is no npm token in this repo
+and releases carry a provenance attestation.
 
 Anything listed in `files` in `package.json` ships to npm, `README.md`
 included, so a README fix needs a release to reach the package page.

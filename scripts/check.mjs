@@ -7,6 +7,7 @@
  * remembered.
  */
 
+import { execSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -55,6 +56,29 @@ if (stray.length > 0) {
 // The repository field is what lets a scanner tie the tarball to a source.
 if (/CHANGE-ME/.test(pkg.repository?.url ?? "")) {
   problems.push("repository.url still has the CHANGE-ME placeholder in it");
+}
+
+// No machine paths in anything that gets committed. A path like
+// C:\Users\<name> or /home/<name> says whose laptop this is, and git history is
+// public and permanent: taking it out later needs a rewrite and a force push,
+// and the old blob can stay reachable by its SHA for a while afterwards.
+// Cheaper to never commit it.
+//
+// Matched by shape, never by name: hardcoding the name here would put it in the
+// repo, which is the thing this prevents.
+const LOCAL_PATH = /(?:[A-Za-z]:\\Users\\|\/home\/|\/Users\/)[A-Za-z0-9._-]+/;
+const tracked = execSync("git ls-files", { cwd: root, encoding: "utf8" })
+  .split("\n")
+  .filter(Boolean);
+for (const file of tracked) {
+  let body;
+  try {
+    body = await readFile(path.join(root, file), "utf8");
+  } catch {
+    continue; // unreadable or binary; nothing to scan
+  }
+  const hit = LOCAL_PATH.exec(body);
+  if (hit) problems.push(`${file} contains a machine path: ${hit[0]}`);
 }
 
 if (problems.length > 0) {
