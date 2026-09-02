@@ -4,7 +4,7 @@ A read-only [MCP](https://modelcontextprotocol.io) server for [fyzno.com](https:
 
 Its main use is the **mail health check**: give it a domain and it reports mail
 routing, SPF, DKIM, DMARC, MTA-STS, TLS-RPT, a live SMTP STARTTLS handshake, the
-mail server's certificate, and the sending server's Spamhaus ZEN listing: as a
+mail server's certificate, and the sending server's Spamhaus ZEN listing, as a
 0–100 score with one finding per check. BIMI, IPv6, web security headers and DNS
 hygiene are reported for information and never move the score.
 
@@ -27,8 +27,11 @@ That file is `.mcp.json` in a project for Claude Code, or
 `claude_desktop_config.json` for Claude Desktop. Cursor, Windsurf, Zed and
 VS Code use the same shape.
 
-The transport is **stdio**, so the client runs it as a local process. There is
-no hosted endpoint to point a browser-based assistant at.
+The transport is **stdio**, so the client runs it as a local process.
+
+**In a browser?** ChatGPT and claude.ai cannot spawn a local process, so they
+use the hosted endpoint instead: add `https://fyzno.com/mcp` as a custom
+connector. Same seventeen tools, same results.
 
 ## Tools
 
@@ -48,14 +51,14 @@ no hosted endpoint to point a browser-based assistant at.
 | `check_ipv6` | `domain` | IPv6 reachability (informational) |
 | `check_web_security` | `domain` | Website transport and headers (informational) |
 | `check_dns_hygiene` | `domain` | Zone consistency (informational) |
-| `site_status` |: | Live service status and the incident record |
-| `site_data` |: | What Fyzno does, where it runs, how to reach a person |
-| `pages` |: | The site's pages with one line on each |
+| `site_status` | (none) | Live service status and the incident record |
+| `site_data` | (none) | What Fyzno does, where it runs, how to reach a person |
+| `pages` | (none) | The site's pages with one line on each |
 
 Every `check_*` tool runs the same report and returns one finding from it, so
 the numbers always agree with `mail_health_check`. **If you want more than one
 check on the same domain, call `mail_health_check` once** rather than fanning
-out: it is a single request instead of thirteen.
+out, since that is one request instead of thirteen.
 
 ## Dependencies
 
