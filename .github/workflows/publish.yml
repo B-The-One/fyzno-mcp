@@ -1,0 +1,55 @@
+# Publish to npm with provenance, using Trusted Publishing (OIDC).
+#
+# There is no npm token anywhere in this repository or in GitHub's secrets.
+# npm trusts THIS workflow in THIS repository, verifies that with a short-lived
+# OpenID Connect credential, and mints publish rights for the length of one
+# job. Nothing long-lived exists to leak.
+#
+# It also attaches a provenance attestation: a signed, public statement that
+# this exact tarball was built by this workflow from this commit. That is the
+# "Provenance" badge on npmjs.com, and `npm audit signatures` verifies it.
+#
+# BEFORE THE FIRST RUN, on npmjs.com:
+#   the package page -> Settings -> Trusted Publisher -> GitHub Actions
+#   Repository:      B-The-One/fyzno-mcp
+#   Workflow file:   publish.yml
+#
+# To release: bump the version, commit, then either publish a GitHub Release
+# or run this workflow by hand from the Actions tab.
+
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # The OIDC token npm exchanges for publish rights. Without this the job
+      # has no identity to present and the publish is rejected.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing needs a recent npm; the runner's bundled version
+      # can lag behind what supports OIDC.
+      - run: npm install -g npm@latest
+
+      # No lockfile is committed (the only dependency is the SDK the
+      # conformance test drives), so install rather than ci.
+      - run: npm install
+
+      # Publishing a server that fails its own protocol tests would be worse
+      # than not publishing at all.
+      - run: npm test
+
+      - run: npm publish

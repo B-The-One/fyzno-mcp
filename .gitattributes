@@ -1,0 +1,11 @@
+# LF everywhere, on every platform.
+#
+# server.mjs starts with a shebang and npm's launcher execs it directly on
+# Linux and macOS. If Git hands out CRLF line endings, that first line becomes
+# "#!/usr/bin/env node\r" and the kernel looks for an interpreter literally
+# named "node\r": the failure reads "bad interpreter: no such file or
+# directory", which names neither Git nor the line ending.
+#
+# Windows checkouts get LF too. Every editor that matters handles it, and it
+# keeps what is committed identical to what is published.
+* text=auto eol=lf

@@ -1,0 +1,69 @@
+{
+  "name": "@fyzno/mcp",
+  "version": "1.2.0",
+  "description": "Read-only MCP server for fyzno.com: site status, site facts, page index, and a mail health check (SPF, DKIM, DMARC, MTA-STS, TLS-RPT, SMTP TLS, certificates, reputation) for any domain. Zero dependencies.",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "email",
+    "deliverability",
+    "spf",
+    "dkim",
+    "dmarc",
+    "mta-sts",
+    "smtp",
+    "dns"
+  ],
+  "homepage": "https://fyzno.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/B-The-One/fyzno-mcp.git"
+  },
+  "bugs": {
+    "url": "https://fyzno.com/brief",
+    "email": "info@fyzno.com"
+  },
+  "author": {
+    "name": "Fyzno",
+    "url": "https://fyzno.com"
+  },
+  "license": "MIT",
+  "type": "module",
+  "types": "./server.d.mts",
+  "exports": {
+    ".": {
+      "types": "./server.d.mts",
+      "default": "./server.mjs"
+    },
+    "./server.mjs": {
+      "types": "./server.d.mts",
+      "default": "./server.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fyzno-mcp": "server.mjs"
+  },
+  "files": [
+    "server.mjs",
+    "server.d.mts",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/check.mjs && node test/conformance.mjs",
+    "prepublishOnly": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
