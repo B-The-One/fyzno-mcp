@@ -7,9 +7,12 @@ test/conformance.mjs drives the server with the real MCP SDK client
 scripts/check.mjs    pre-publish guards
 ```
 
+The rules this code lives by are in the header of `server.mjs`, next to the
+code they apply to, and `scripts/check.mjs` enforces the ones it can. Read
+that header before changing anything.
+
 `@modelcontextprotocol/sdk` is a devDependency, used only by the conformance
-test. Do not move it to `dependencies`; the point of this package is that
-installing it pulls nothing in.
+test. Do not move it to `dependencies`.
 
 ## Before pushing
 
@@ -17,30 +20,16 @@ installing it pulls nothing in.
 npm test
 ```
 
-Guards plus the conformance suite. The guards fail on a runtime dependency, a
-version drift between `SERVER_INFO` and `package.json`, a missing shebang, or a
-`console.log` in `server.mjs`.
-
-That last one matters: stdout carries the JSON-RPC stream. One `console.log`
-writes a non-protocol line into it and the client's parser gives up.
-Diagnostics go to `console.error`.
-
 ## Releasing
 
 1. Bump `version` in `package.json` and `SERVER_INFO.version` in `server.mjs`.
 2. Add a `CHANGELOG.md` entry.
-3. Commit, push.
-4. Create a GitHub Release, or run the `publish` workflow from the Actions tab.
+3. Commit and push. The tag has to point at a commit that already has the new
+   version in it, so the bump goes in before the release, not after.
+4. Create a GitHub Release with tag `vX.Y.Z`, and write a description; left
+   blank, GitHub falls back to the commit message.
 
-CI publishes via Trusted Publishing, so there is no npm token in this repo and
-releases carry a provenance attestation.
+CI publishes via Trusted Publishing. There is no npm token in this repo.
 
-## Invariants
-
-- no tool writes anything
-- no tool accepts a URL, only a domain name
-- the only origin read from is `FYZNO_BASE_URL`, default `https://fyzno.com`
-- every request has a hard timeout
-
-These are stated on the package page and in the site copy at `/health` and
-`llms.txt`. Breaking one means changing those too.
+Anything listed in `files` in `package.json` ships to npm, `README.md`
+included, so a README fix needs a release to reach the package page.
