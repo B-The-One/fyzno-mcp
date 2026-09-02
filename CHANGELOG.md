@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.2.1
+
+Documentation only. No code change; upgrading from 1.2.0 changes nothing at
+runtime.
+
+The README claimed there was no hosted endpoint for browser-based assistants.
+That stopped being true when https://fyzno.com/mcp shipped, and the README is
+what npmjs.com renders, so the package page was telling people a capability
+did not exist. It now points at the connector.
+
+Also fixes three rows of the tools table that rendered as a bare colon, and
+adds the 1.2.0 entry below, which was missed at the time.
+
+## 1.2.0
+
+Moved to its own repository at https://github.com/B-The-One/fyzno-mcp.
+
+`server.mjs` used to live in the fyzno.com tree and get copied into a package
+at pack time. It is now the source. Two copies of one file drift, and this one
+had already started to.
+
+No change to the tools. Same seventeen, same arguments, same results.
+
+- Published from CI with a provenance attestation, so the tarball is
+  cryptographically tied to the commit that built it. Verify with
+  `npm audit signatures`.
+- Ships TypeScript types (`server.d.mts`), so callers importing `TOOLS` and
+  `callTool` are type-checked.
+- Adds `repository`, `author`, `bugs` and a LICENSE file.
+
 ## 1.1.0
 
 **No dependencies.** The package installed 96 packages and 25 MB before this

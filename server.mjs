@@ -397,7 +397,7 @@ async function callTool(name, args, opts = {}) {
 // console.log corrupts the stream and there is no recovering from it.
 
 // Kept in step with packages/mcp/package.json by hand; build.mjs checks it.
-const SERVER_INFO = { name: "fyzno", version: "1.2.0" };
+const SERVER_INFO = { name: "fyzno", version: "1.2.1" };
 
 /** Versions whose tools/list and tools/call semantics are the ones below.
  *  Mirrors SUPPORTED_PROTOCOL_VERSIONS in the SDK's types.js. */

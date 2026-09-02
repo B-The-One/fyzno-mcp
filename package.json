@@ -1,6 +1,6 @@
 {
   "name": "@fyzno/mcp",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Read-only MCP server for fyzno.com: site status, site facts, page index, and a mail health check (SPF, DKIM, DMARC, MTA-STS, TLS-RPT, SMTP TLS, certificates, reputation) for any domain. Zero dependencies.",
   "keywords": [
     "mcp",
