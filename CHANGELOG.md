@@ -1,5 +1,40 @@
 # Changelog
 
+## 2.0.0
+
+Two more reports. The server used to expose the mail health check and nothing
+else; it now exposes three, each scored out of 100:
+
+- `mail_health_check` as before
+- `web_security_check`: HTTPS and the redirect chain, certificate, TLS, HSTS,
+  Content-Security-Policy judged on what it permits rather than whether it
+  exists, framing and MIME handling, referrer and permissions policy, cookie
+  flags, and content integrity
+- `dns_hygiene_check`: name server redundancy and provider spread, CAA, SOA
+  timers, and wildcard resolution
+
+**Breaking: `check_web_security` and `check_dns_hygiene` are gone.** Neither
+was a web or DNS check. Both projected the *mail* report's optional, unscored
+sections, and `check_dns_hygiene` told callers that CAA was out of scope, which
+stopped being true the moment a real DNS report existed and scored CAA at 30 of
+100. Leaving them beside the new tools would have left an agent choosing
+between `check_web_security` and `web_security_check` on a coin flip.
+
+If you called either, switch to the report tool of the same subject. The reply
+is a superset of what the old tool returned.
+
+The thirteen `check_*` tools are unchanged: each still returns one finding from
+the mail report.
+
+**Also:** the mail report is now read from `/api/mail`. `/api/health` still
+answers identically and carries `Deprecation` and `Sunset` headers, but this
+package no longer depends on it.
+
+No new tools were added for the individual findings of the web and DNS reports.
+Thirteen such tools already exist for mail, and every tool's name and
+description is spent from an agent's context on every conversation. Two more
+tools is cheap; twenty-six more is a tax for a convenience nobody has asked for.
+
 ## 1.2.1
 
 Documentation only. No code change; upgrading from 1.2.0 changes nothing at

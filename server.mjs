@@ -8,9 +8,10 @@
 //
 // A Model Context Protocol server that lets a local agent (Claude, Codex,
 // anything that speaks MCP) read this site the way a person would: its
-// status, its public facts, its pages, the free mail health check as one
-// all-in-one tool, and every individual check in that report as its own
-// tool (check_spf, check_dkim, ...).
+// status, its public facts, its pages, and the three free reports: mail,
+// website security, and DNS hygiene. The mail report also exposes each of its
+// findings as its own tool (check_spf, check_dkim, ...) for an agent that
+// wants one answer rather than the whole thing.
 //
 // Point any MCP client at:
 //
@@ -199,21 +200,15 @@ const CHECK_TOOLS = [
     what:
       "The apex AAAA record and whether advertised mail hosts answer over IPv6. Optional; never moves the score.",
   },
-  {
-    tool: "check_web_security",
-    id: "web-security",
-    title: "Web security headers check",
-    what:
-      "The website itself: HTTPS, HSTS, X-Content-Type-Options, CSP, X-Frame-Options, Referrer-Policy, and the HTTP to HTTPS redirect. Optional; never moves the score.",
-  },
-  {
-    tool: "check_dns_hygiene",
-    id: "dns-hygiene",
-    title: "DNS hygiene check",
-    what:
-      "The zone itself: name servers and their redundancy, wildcard A behaviour; CAA and DNSSEC are listed as out of scope. Optional; never moves the score.",
-  },
 ];
+
+// check_web_security and check_dns_hygiene used to sit here. Both projected the
+// MAIL report's optional, unscored sections: five headers, and a thin view of
+// the zone whose own description said CAA was out of scope. That was accurate
+// when they were the only tools of their kind. It stopped being accurate the
+// moment real web and DNS reports existed, where CAA alone is worth 30 of 100.
+// They are replaced by web_security_check and dns_hygiene_check below, which
+// run the actual reports. Removing them is why this is a major version.
 
 const CHECK_BY_TOOL = new Map(CHECK_TOOLS.map((entry) => [entry.tool, entry]));
 
@@ -258,6 +253,20 @@ const TOOLS = [
       "Run the free mail health check for a domain: mail routing, SPF, DKIM, DMARC, MTA-STS, TLS-RPT, a live SMTP STARTTLS handshake, the mail server's certificate, and the sending server's Spamhaus ZEN listing. Returns a 0-100 score, a verdict, and one finding per check with sub-checks. Optional checks (BIMI, IPv6, web security headers) are informational and never move the score. For a single check use the check_* tools (check_spf, check_dkim, ...) instead. The domain goes to DNS and the mail servers only; nothing is stored.",
     inputSchema: DOMAIN_INPUT,
   },
+  {
+    name: "web_security_check",
+    title: "Website security check",
+    description:
+      "Run the free website security report for a domain: HTTPS and the redirect chain, the certificate, the TLS protocol and cipher, HSTS, the Content-Security-Policy judged on what it actually permits rather than whether it exists, framing and MIME handling, referrer and permissions policy, cookie flags, and content integrity. Returns a 0-100 score, a verdict, and one finding per section with sub-checks. Read-only: it fetches the home page the way a browser would plus /.well-known/security.txt, and sends no payload, probes no form, guesses no path and scans no port. Nothing is stored.",
+    inputSchema: DOMAIN_INPUT,
+  },
+  {
+    name: "dns_hygiene_check",
+    title: "DNS hygiene check",
+    description:
+      "Run the free DNS hygiene report for a domain: name server redundancy and whether the servers sit under more than one provider, CAA records naming which authorities may issue certificates, SOA timers against the RFC 1912 ranges, and whether an unknown subdomain resolves. Returns a 0-100 score, a verdict, and one finding per section. Cache lifetimes are reported but never scored, and DNSSEC is reported as not tested rather than guessed. Read-only, from public records: no zone transfer is attempted and no subdomain is guessed.",
+    inputSchema: DOMAIN_INPUT,
+  },
   ...CHECK_TOOLS.map((entry) => ({
     name: entry.tool,
     title: entry.title,
@@ -280,7 +289,7 @@ async function runSingleCheck(entry, toolName, args, opts = {}) {
     return errorContent(`${toolName} requires a domain argument.`);
   }
   const { status, body, error } = await getJson(
-    `/api/health?d=${encodeURIComponent(domain)}`,
+    `/api/mail?d=${encodeURIComponent(domain)}`,
     HEALTH_TIMEOUT_MS,
     opts,
   );
@@ -342,13 +351,36 @@ async function callTool(name, args, opts = {}) {
       return jsonContent(body.pages);
     }
 
+    case "web_security_check":
+    case "dns_hygiene_check": {
+      const domain = typeof args?.domain === "string" ? args.domain.trim() : "";
+      if (!domain) return errorContent(`${name} requires a domain argument.`);
+      const path = name === "web_security_check" ? "/api/web" : "/api/dns";
+      const { status, body, error } = await getJson(
+        `${path}?d=${encodeURIComponent(domain)}`,
+        HEALTH_TIMEOUT_MS,
+        opts,
+      );
+      if (error) return errorContent(`${name} failed: ${error}`);
+      if (status === 429) {
+        return errorContent(
+          "The check rate limit is in effect. Wait an hour and try again.",
+        );
+      }
+      if (status !== 200 || !body?.ok || !body.report) {
+        const detail = body?.error ? `: ${body.error}` : "";
+        return errorContent(`${name} returned HTTP ${status}${detail}`);
+      }
+      return jsonContent(body.report);
+    }
+
     case "mail_health_check": {
       const domain = typeof args?.domain === "string" ? args.domain.trim() : "";
       if (!domain) {
         return errorContent("mail_health_check requires a domain argument.");
       }
       const { status, body, error } = await getJson(
-        `/api/health?d=${encodeURIComponent(domain)}`,
+        `/api/mail?d=${encodeURIComponent(domain)}`,
         HEALTH_TIMEOUT_MS,
         opts,
       );
@@ -397,7 +429,7 @@ async function callTool(name, args, opts = {}) {
 // console.log corrupts the stream and there is no recovering from it.
 
 // Kept in step with packages/mcp/package.json by hand; build.mjs checks it.
-const SERVER_INFO = { name: "fyzno", version: "1.2.1" };
+const SERVER_INFO = { name: "fyzno", version: "2.0.0" };
 
 /** Versions whose tools/list and tools/call semantics are the ones below.
  *  Mirrors SUPPORTED_PROTOCOL_VERSIONS in the SDK's types.js. */

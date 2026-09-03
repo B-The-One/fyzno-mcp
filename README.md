@@ -2,11 +2,22 @@
 
 A read-only [MCP](https://modelcontextprotocol.io) server for [fyzno.com](https://fyzno.com).
 
-Its main use is the **mail health check**: give it a domain and it reports mail
-routing, SPF, DKIM, DMARC, MTA-STS, TLS-RPT, a live SMTP STARTTLS handshake, the
-mail server's certificate, and the sending server's Spamhaus ZEN listing, as a
-0–100 score with one finding per check. BIMI, IPv6, web security headers and DNS
-hygiene are reported for information and never move the score.
+It runs three free reports on any domain, each scored out of 100 with one
+finding per section, and each stating plainly what could not be tested rather
+than guessing:
+
+- **Mail**: routing, SPF, DKIM, DMARC, MTA-STS fetched over HTTPS, TLS-RPT, a
+  live STARTTLS handshake with the mail servers, the certificates behind it,
+  and the sending server's Spamhaus ZEN listing.
+- **Web security**: HTTPS and the redirect chain, the certificate, TLS, HSTS,
+  the Content-Security-Policy judged on what it actually permits, framing and
+  MIME handling, referrer and permissions policy, cookie flags, and content
+  integrity.
+- **DNS hygiene**: name server redundancy and provider spread, CAA, SOA timers,
+  and wildcard resolution.
+
+Everything is read-only. No payload is ever sent, no form is probed, no path is
+guessed and no port is scanned.
 
 ## Use it
 
@@ -37,7 +48,9 @@ connector. Same seventeen tools, same results.
 
 | Tool | Takes | Returns |
 | --- | --- | --- |
-| `mail_health_check` | `domain` | The full report: score, verdict, every check |
+| `mail_health_check` | `domain` | The full mail report |
+| `web_security_check` | `domain` | The full website security report |
+| `dns_hygiene_check` | `domain` | The full DNS hygiene report |
 | `check_routing` | `domain` | MX records and whether mail can be delivered at all |
 | `check_spf` | `domain` | SPF record, lookup count, and the `all` qualifier |
 | `check_dkim` | `domain` | DKIM keys found across common selectors |
@@ -49,11 +62,14 @@ connector. Same seventeen tools, same results.
 | `check_reputation` | `domain` | Spamhaus ZEN listing for the sending IP |
 | `check_bimi` | `domain` | BIMI record (informational) |
 | `check_ipv6` | `domain` | IPv6 reachability (informational) |
-| `check_web_security` | `domain` | Website transport and headers (informational) |
-| `check_dns_hygiene` | `domain` | Zone consistency (informational) |
 | `site_status` | (none) | Live service status and the incident record |
 | `site_data` | (none) | What Fyzno does, where it runs, how to reach a person |
 | `pages` | (none) | The site's pages with one line on each |
+
+The `check_*` tools each return one finding from the **mail** report. There are
+no equivalents for the web and DNS reports: thirteen such tools already exist,
+and every tool's description is spent from an agent's context on every
+conversation.
 
 Every `check_*` tool runs the same report and returns one finding from it, so
 the numbers always agree with `mail_health_check`. **If you want more than one
