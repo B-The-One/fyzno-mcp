@@ -44,6 +44,19 @@ The transport is **stdio**, so the client runs it as a local process.
 use the hosted endpoint instead: add `https://fyzno.com/mcp` as a custom
 connector. Same seventeen tools, same results.
 
+**No MCP at all?** Every report is plain JSON over HTTPS, so anything that can
+fetch a URL can read one. No key, no account, no client:
+
+```
+https://fyzno.com/api/mail?d=example.com
+https://fyzno.com/api/web?d=example.com
+https://fyzno.com/api/dns?d=example.com
+```
+
+That is what this package calls under the hood, so the answers are identical.
+Useful for a shell script, a cron job, or an assistant whose tooling stops at
+`fetch`.
+
 ## Tools
 
 | Tool | Takes | Returns |
