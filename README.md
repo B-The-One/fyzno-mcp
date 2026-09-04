@@ -57,6 +57,13 @@ That is what this package calls under the hood, so the answers are identical.
 Useful for a shell script, a cron job, or an assistant whose tooling stops at
 `fetch`.
 
+You can also just paste one of those URLs into ChatGPT or Claude and ask them
+to read it, which usually works and needs no setup at all. The connector is
+still the better route for anything you care about: browsing is the model's
+decision rather than a tool it knows it has, and it will summarise the JSON
+rather than report it, which is a poor trade on a document whose value is that
+the numbers are exact.
+
 ## Tools
 
 | Tool | Takes | Returns |
